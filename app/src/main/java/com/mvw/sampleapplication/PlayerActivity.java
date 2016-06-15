@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.*;
 import android.text.TextUtils;
@@ -67,9 +68,16 @@ import com.google.android.exoplayer.util.MimeTypes;
 import com.google.android.exoplayer.util.Util;
 import com.google.android.exoplayer.util.VerboseLogUtil;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.List;
 import java.util.Locale;
 
@@ -195,7 +203,8 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
     public void onStart() {
         super.onStart();
         if (Util.SDK_INT > 23) {
-            onShown();
+            //onShown();
+            new DownloadTask().execute();
         }
     }
 
@@ -203,7 +212,8 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
     public void onResume() {
         super.onResume();
         if (Util.SDK_INT <= 23 || player == null) {
-            onShown();
+            //onShown();
+            new DownloadTask().execute();
         }
     }
 
@@ -745,5 +755,64 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
             return super.dispatchKeyEvent(event);
         }
     }
+
+    private class DownloadTask extends AsyncTask<Void,Void,Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            try {
+
+                File file = new File(getApplicationContext().getFilesDir(),"/video");
+                if (!file.exists()) {
+                    file.mkdirs();
+                }
+
+                String path = file + "/video.mp4";
+
+                URL url = new URL("http://download.wavetlan.com/SVV/Media/HTTP/MP4/ConvertedFiles/Media-Convert/Unsupported/test7.mp4");
+                URLConnection connection = url.openConnection();
+                InputStream inputstream = connection.getInputStream();
+                BufferedInputStream inStream = new BufferedInputStream(inputstream, 1024 * 5);
+                FileOutputStream outStream = new FileOutputStream(path);
+                byte[] buff = new byte[5 * 1024];
+
+                //Read bytes (and store them) until there is nothing more to read(-1)
+                int filesize = connection.getContentLength();
+                int downloaded = 0;
+                int len;
+                while ((len = inStream.read(buff)) != -1) {
+                    outStream.write(buff,0,len);
+                    downloaded += len;
+                    int percentage = (downloaded * 100)/filesize;
+                    Log.v("percentage", Integer.toString(percentage));
+                    if(percentage == 25){
+                        publishProgress();
+                    }
+                }
+                //clean up
+                outStream.flush();
+                outStream.close();
+                inStream.close();
+            }catch(IOException exception){exception.printStackTrace();}
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            Log.v("asdasd", "adsas");
+
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+            onShown();
+        }
+
+
+    }
+
 
 }

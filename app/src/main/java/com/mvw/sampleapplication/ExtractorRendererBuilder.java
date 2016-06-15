@@ -74,15 +74,12 @@ public class ExtractorRendererBuilder implements DemoPlayer.RendererBuilder, Tra
     private final Context context;
     private final String userAgent;
     private Uri uri;
-    File mediaFile;
-    DataSource dataSource;
 
 
     public ExtractorRendererBuilder(Context context, String userAgent, Uri uri) {
         this.context = context;
         this.userAgent = userAgent;
         this.uri = uri;
-        this.mediaFile = new File(context.getCacheDir(), "mySuperVideo.mp4");
     }
 
     @Override
@@ -92,16 +89,26 @@ public class ExtractorRendererBuilder implements DemoPlayer.RendererBuilder, Tra
 
         // Build the video and audio renderers.
         DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter(mainHandler, null);
-        if(isNetworkAvailable()){
+        /*if(isNetworkAvailable()){
            //dataSource = new CachedHttpDataSource(userAgent,null,context);
             dataSource = new DefaultUriDataSource(context,this,userAgent);
         }
         else{
             dataSource = new FileDataSource();
-            File mediaFile = new File(context.getFilesDir(), "mySuperVideo.mp4");
+            File mediaFile = new File(context.getFilesDir(),"/videos/video.mp4");
             Log.v("lengthmedia",Long.toString(mediaFile.length()));
             uri = Uri.parse("" + mediaFile.getAbsolutePath());
+        }*/
+
+        DataSource dataSource = new FileDataSource();
+        File mediaFile = new File(context.getFilesDir(),"/video");
+        if (!mediaFile.exists()) {
+            mediaFile.mkdirs();
         }
+
+        String path = mediaFile + "/video.mp4";
+        Log.v("lengthmedia",Long.toString(mediaFile.length()));
+        uri = Uri.parse("file://" + path);
 
         ExtractorSampleSource sampleSource = new ExtractorSampleSource(uri,dataSource,allocator,
                 BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE, mainHandler, player, 0);
