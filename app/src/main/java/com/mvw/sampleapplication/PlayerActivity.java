@@ -23,6 +23,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -202,18 +204,24 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
     @Override
     public void onStart() {
         super.onStart();
-        if (Util.SDK_INT > 23) {
+        if (Util.SDK_INT > 23 && isNetworkAvailable()) {
             //onShown();
             new DownloadTask().execute();
+        }
+        else{
+            onShown();
         }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (Util.SDK_INT <= 23 || player == null) {
+        if ((Util.SDK_INT <= 23 || player == null) && isNetworkAvailable()) {
             //onShown();
             new DownloadTask().execute();
+        }
+        else{
+            onShown();
         }
     }
 
@@ -801,7 +809,6 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            Log.v("asdasd", "adsas");
 
         }
 
@@ -810,8 +817,16 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
             super.onProgressUpdate(values);
             onShown();
         }
+    }
 
-
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        if (networkInfo == null) {
+            return false;
+        }
+        NetworkInfo.State network = networkInfo.getState();
+        return (network == NetworkInfo.State.CONNECTED || network == NetworkInfo.State.CONNECTING);
     }
 
 

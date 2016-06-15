@@ -66,7 +66,7 @@ import okhttp3.Response;
 /**
  * A {@link } for streams that can be read using an {@link Extractor}.
  */
-public class ExtractorRendererBuilder implements DemoPlayer.RendererBuilder, TransferListener{
+public class ExtractorRendererBuilder implements DemoPlayer.RendererBuilder{
 
     private static final int BUFFER_SEGMENT_SIZE = 64 * 1024;
     private static final int BUFFER_SEGMENT_COUNT = 256;
@@ -134,28 +134,6 @@ public class ExtractorRendererBuilder implements DemoPlayer.RendererBuilder, Tra
         // Do nothing.
     }
 
-    public Boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-        if (networkInfo == null) {
-            return false;
-        }
-        NetworkInfo.State network = networkInfo.getState();
-        return (network == NetworkInfo.State.CONNECTED || network == NetworkInfo.State.CONNECTING);
-    }
-
-    @Override
-    public void onTransferStart() {
-
-    }
 
 
-    @Override
-    public void onBytesTransferred(int bytesTransferred) {
-    }
-
-    @Override
-    public void onTransferEnd() {
-
-    }
 }
