@@ -89,26 +89,20 @@ public class ExtractorRendererBuilder implements DemoPlayer.RendererBuilder{
 
         // Build the video and audio renderers.
         DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter(mainHandler, null);
-        /*if(isNetworkAvailable()){
-           //dataSource = new CachedHttpDataSource(userAgent,null,context);
-            dataSource = new DefaultUriDataSource(context,this,userAgent);
-        }
-        else{
-            dataSource = new FileDataSource();
-            File mediaFile = new File(context.getFilesDir(),"/videos/video.mp4");
-            Log.v("lengthmedia",Long.toString(mediaFile.length()));
-            uri = Uri.parse("" + mediaFile.getAbsolutePath());
-        }*/
-
         DataSource dataSource = new FileDataSource();
-        File mediaFile = new File(context.getFilesDir(),"/video");
-        if (!mediaFile.exists()) {
-            mediaFile.mkdirs();
+        File mediafile = new File(context.getFilesDir(),"/media");
+        if (!mediafile.exists()) {
+            mediafile.mkdirs();
         }
 
-        String path = mediaFile + "/video.mp4";
-        Log.v("lengthmedia",Long.toString(mediaFile.length()));
-        uri = Uri.parse("file://" + path);
+        String[] urlSegments = uri.getPath().split("/");
+        String filename = uri.hashCode() + "_" + urlSegments[urlSegments.length-1];
+        String filepath = mediafile + "/" + filename;
+        Log.v("path",filepath);
+
+        File file = new File(filepath);
+        Log.v("lengthmedia",Long.toString(file.length()));
+        uri = Uri.parse("file://" + filepath);
 
         ExtractorSampleSource sampleSource = new ExtractorSampleSource(uri,dataSource,allocator,
                 BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE, mainHandler, player, 0);

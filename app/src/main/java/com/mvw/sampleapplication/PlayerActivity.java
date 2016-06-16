@@ -133,6 +133,8 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
     private int contentType;
     private String contentId;
     private String provider;
+    //"http://download.wavetlan.com/SVV/Media/HTTP/MP4/ConvertedFiles/Media-Convert/Unsupported/test7.mp4"
+    private String mURL = "http://download.wavetlan.com/SVV/Media/HTTP/MP4/ConvertedFiles/Media-Convert/Unsupported/test7.mp4";
 
     private AudioCapabilitiesReceiver audioCapabilitiesReceiver;
 
@@ -206,7 +208,7 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
         super.onStart();
         if (Util.SDK_INT > 23 && isNetworkAvailable()) {
             //onShown();
-            new DownloadTask().execute();
+            new DownloadTask().execute(mURL);
         }
         else{
             onShown();
@@ -218,7 +220,7 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
         super.onResume();
         if ((Util.SDK_INT <= 23 || player == null) && isNetworkAvailable()) {
             //onShown();
-            new DownloadTask().execute();
+            new DownloadTask().execute(mURL);
         }
         else{
             onShown();
@@ -226,8 +228,7 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
     }
 
     private void onShown() {
-        String url = "http://techslides.com/demos/sample-videos/small.mp4";
-        //String url = "https://storage.googleapis.com/wvmedia/clear/h264/tears/tears_uhd.mpd";
+        String url = mURL;
         contentUri = Uri.parse(url);
         contentType = Util.TYPE_OTHER;
         contentId = url.toLowerCase(Locale.US).replaceAll("\\s", "");
@@ -342,12 +343,12 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
         switch (contentType) {
             /*case Util.TYPE_SS:
                 return new SmoothStreamingRendererBuilder(this, userAgent, contentUri.toString(),
-                        new SmoothStreamingTestMediaDrmCallback());*/
+                        new SmoothStreamingTestMediaDrmCallback());
             case Util.TYPE_DASH:
                 return new DashRendererBuilder(this, userAgent, contentUri.toString(),
                         new WidevineTestMediaDrmCallback(contentId, provider));
             case Util.TYPE_HLS:
-                return new HlsRendererBuilder(this, userAgent, contentUri.toString());
+                return new HlsRendererBuilder(this, userAgent, contentUri.toString());*/
             case Util.TYPE_OTHER:
                 return new ExtractorRendererBuilder(this, userAgent, contentUri);
             default:
@@ -764,39 +765,57 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
         }
     }
 
-    private class DownloadTask extends AsyncTask<Void,Void,Void> {
+    private class DownloadTask extends AsyncTask<String,Void,Void> {
 
         @Override
-        protected Void doInBackground(Void... params) {
+        protected Void doInBackground(String... params) {
 
             try {
 
-                File file = new File(getApplicationContext().getFilesDir(),"/video");
+                File file = new File(getApplicationContext().getFilesDir(),"/media");
                 if (!file.exists()) {
                     file.mkdirs();
                 }
 
-                String path = file + "/video.mp4";
+                URL url = new URL((String)params[0]);
+                String[] urlSegments = ((String)params[0]).split("/");
+                String filename = ((String)params[0]).hashCode()+ "_" +urlSegments[urlSegments.length-1];
+                String path = file + "/" + filename;
+                long fileSize = new File(path).length();
+                Log.v("pathname",path);
 
-                URL url = new URL("http://download.wavetlan.com/SVV/Media/HTTP/MP4/ConvertedFiles/Media-Convert/Unsupported/test7.mp4");
                 URLConnection connection = url.openConnection();
                 InputStream inputstream = connection.getInputStream();
                 BufferedInputStream inStream = new BufferedInputStream(inputstream, 1024 * 5);
-                FileOutputStream outStream = new FileOutputStream(path);
+                FileOutputStream outStream = fileSize == 0 ? new FileOutputStream(path): new FileOutputStream(path,true);
                 byte[] buff = new byte[5 * 1024];
-
                 //Read bytes (and store them) until there is nothing more to read(-1)
-                int filesize = connection.getContentLength();
+
+                int downloadsize = connection.getContentLength();
+                Log.v("contentlength",Integer.toString(downloadsize));
                 int downloaded = 0;
                 int len;
-                while ((len = inStream.read(buff)) != -1) {
-                    outStream.write(buff,0,len);
-                    downloaded += len;
-                    int percentage = (downloaded * 100)/filesize;
-                    Log.v("percentage", Integer.toString(percentage));
-                    if(percentage == 25){
-                        publishProgress();
+                if(fileSize == 0) {
+                    while ((len = inStream.read(buff)) != -1) {
+                        outStream.write(buff, 0, len);
+                        downloaded += len;
+                        int percentage = (downloaded * 100) / downloadsize;
+                        Log.v("percentage", Integer.toString(percentage));
+                        if (percentage == 25) {
+                            publishProgress();
+                        }
                     }
+                }else{
+                    /*while ((len = inStream.read(buff)) != -1) {
+                        if(fileSize <= downloaded)
+                            outStream.write(buff, 0, len);
+                        downloaded += len;
+                        int percentage = (downloaded * 100) / downloadsize;
+                        Log.v("percentage", Integer.toString(percentage));
+                        if (percentage == 25) {
+                            publishProgress();
+                        }
+                    }*/
                 }
                 //clean up
                 outStream.flush();
@@ -828,6 +847,4 @@ public class PlayerActivity extends Activity implements SurfaceHolder.Callback, 
         NetworkInfo.State network = networkInfo.getState();
         return (network == NetworkInfo.State.CONNECTED || network == NetworkInfo.State.CONNECTING);
     }
-
-
 }

@@ -40,10 +40,6 @@
                 <data android:scheme="file" />
             </intent-filter>
         </activity>
-
-        <service
-            android:name="com.mvw.sampleapplication.DownloadService"
-            android:exported="false" />
     </application>
 
 </manifest>
